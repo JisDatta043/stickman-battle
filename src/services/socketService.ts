@@ -12,6 +12,22 @@ class SocketService {
 
     useSocketStore.getState().setConnecting(true);
 
+    const isProduction =
+      process.env.NODE_ENV === "production" ||
+      (typeof window !== "undefined" &&
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1");
+    const isLocalhostUrl = url.includes("localhost") || url.includes("127.0.0.1");
+
+    if (isProduction && isLocalhostUrl) {
+      console.warn(
+        `[SocketService] Warning: Production mode detected, but NEXT_PUBLIC_SOCKET_URL is pointing to "${url}". Real-time multiplayer requires setting NEXT_PUBLIC_SOCKET_URL in Vercel Project Settings.`
+      );
+      useSocketStore.getState().setIsLocalhostInProduction(true);
+    } else {
+      useSocketStore.getState().setIsLocalhostInProduction(false);
+    }
+
     try {
       this.socket = io(url, {
         autoConnect: true,

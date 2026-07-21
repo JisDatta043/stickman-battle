@@ -4,6 +4,7 @@ interface SocketState {
   isConnected: boolean;
   isConnecting: boolean;
   isFallback: boolean;
+  isLocalhostInProduction: boolean;
   latency: number;
   socketId: string | null;
   error: string | null;
@@ -12,6 +13,7 @@ interface SocketState {
   setConnected: (connected: boolean) => void;
   setConnecting: (connecting: boolean) => void;
   setIsFallback: (isFallback: boolean) => void;
+  setIsLocalhostInProduction: (val: boolean) => void;
   setLatency: (latency: number) => void;
   setSocketId: (id: string | null) => void;
   setError: (error: string | null) => void;
@@ -21,6 +23,7 @@ export const useSocketStore = create<SocketState>((set) => ({
   isConnected: false,
   isConnecting: false,
   isFallback: false,
+  isLocalhostInProduction: false,
   latency: 0,
   socketId: null,
   error: null,
@@ -28,6 +31,7 @@ export const useSocketStore = create<SocketState>((set) => ({
   setConnected: (isConnected) => set({ isConnected, isConnecting: false }),
   setConnecting: (isConnecting) => set({ isConnecting }),
   setIsFallback: (isFallback) => set({ isFallback }),
+  setIsLocalhostInProduction: (isLocalhostInProduction) => set({ isLocalhostInProduction }),
   setLatency: (latency) => set({ latency }),
   setSocketId: (socketId) => set({ socketId }),
   setError: (error) => set({ error }),

@@ -4,13 +4,13 @@ import React from "react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-interface BadgeProps {
+interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
   variant?: "success" | "warning" | "danger" | "info" | "neutral";
   className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ children, variant = "neutral", className }) => {
+export const Badge: React.FC<BadgeProps> = ({ children, variant = "neutral", className, ...props }) => {
   const base = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide border";
 
   const variants = {
@@ -21,5 +21,9 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = "neutral", cla
     neutral: "bg-slate-800 text-slate-300 border-slate-700",
   };
 
-  return <span className={twMerge(clsx(base, variants[variant], className))}>{children}</span>;
+  return (
+    <span className={twMerge(clsx(base, variants[variant], className))} {...props}>
+      {children}
+    </span>
+  );
 };
