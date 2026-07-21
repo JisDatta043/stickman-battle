@@ -11,6 +11,11 @@ export class BotAI {
     this.target = target;
   }
 
+  public reset() {
+    this.updateTimer = 0;
+    this.attackCooldownTimer = 0;
+  }
+
   public update(time: number, delta: number) {
     if (this.bot.hp <= 0 || this.target.hp <= 0) {
       this.bot.body.setVelocityX(0);

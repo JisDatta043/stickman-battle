@@ -160,6 +160,26 @@ export class Stickman extends Phaser.GameObjects.Container {
     this.facing = dir;
   }
 
+  public reset(x: number, y: number, startFacing: "left" | "right" = "right") {
+    this.hp = this.maxHp;
+    this.fighterState = "idle";
+    this.facing = startFacing;
+    this.isAttackingState = false;
+    this.lastAttackTime = 0;
+    this.attackDurationTimer = 0;
+
+    this.setPosition(x, y);
+    if (this.body) {
+      this.body.setVelocity(0, 0);
+      this.body.setAcceleration(0, 0);
+      this.body.enable = true;
+    }
+
+    if (this.punchHitbox) this.punchHitbox.deactivate();
+    if (this.kickHitbox) this.kickHitbox.deactivate();
+  }
+
+
   /**
    * Procedural Stickman Kinematic Rendering
    */

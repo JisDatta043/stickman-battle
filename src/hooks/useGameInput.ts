@@ -3,15 +3,31 @@
 import { useEffect, useRef } from "react";
 import { Stickman } from "@/phaser/objects/Stickman";
 import { SoundManager } from "@/phaser/audio/SoundManager";
+import { useGameStore } from "@/stores/useGameStore";
 
-export function useGameInput(player?: Stickman) {
+export interface StickmanOwner {
+  player1?: Stickman;
+}
+
+export function useGameInput(target?: Stickman | StickmanOwner | null) {
   const keysRef = useRef<{ [key: string]: boolean }>({});
 
-  useEffect(() => {
-    if (!player || !player.scene) return;
+  const getPlayer = (): Stickman | undefined => {
+    if (!target) return undefined;
+    if ("player1" in target && target.player1) {
+      return target.player1;
+    }
+    if ("body" in target) {
+      return target as Stickman;
+    }
+    return undefined;
+  };
 
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const player = getPlayer();
       if (!player || !player.scene || !player.body) return;
+      if (useGameStore.getState().status !== "playing" || useGameStore.getState().isPaused) return;
 
       // Prevent default scrolling on arrow keys & space
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
@@ -38,12 +54,29 @@ export function useGameInput(player?: Stickman) {
       keysRef.current[e.code] = false;
     };
 
+    const handleBlur = () => {
+      keysRef.current = {};
+    };
+
+    const unsubscribe = useGameStore.subscribe((state) => {
+      if (state.status !== "playing" || state.isPaused) {
+        keysRef.current = {};
+      }
+    });
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
 
     // Frame update loop for continuous movement (WASD / Arrows)
     const updateMovement = () => {
+      const player = getPlayer();
       if (!player || !player.body || player.hp <= 0) return;
+
+      if (useGameStore.getState().status !== "playing" || useGameStore.getState().isPaused) {
+        player.body.setVelocityX(0);
+        return;
+      }
 
       const isLeft = keysRef.current["KeyA"] || keysRef.current["ArrowLeft"];
       const isRight = keysRef.current["KeyD"] || keysRef.current["ArrowRight"];
@@ -65,9 +98,11 @@ export function useGameInput(player?: Stickman) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+      unsubscribe();
       clearInterval(interval);
     };
-  }, [player]);
+  }, [target]);
 
   // Mobile / Touch action triggers
   const triggerMoveLeft = (active: boolean) => {
@@ -79,6 +114,7 @@ export function useGameInput(player?: Stickman) {
   };
 
   const triggerJump = () => {
+    const player = getPlayer();
     if (player?.body?.blocked?.down) {
       player.body.setVelocityY(-560);
       SoundManager.playJump();
@@ -86,11 +122,11 @@ export function useGameInput(player?: Stickman) {
   };
 
   const triggerPunch = () => {
-    player?.punch();
+    getPlayer()?.punch();
   };
 
   const triggerKick = () => {
-    player?.kick();
+    getPlayer()?.kick();
   };
 
   return {

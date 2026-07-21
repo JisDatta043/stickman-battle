@@ -21,7 +21,7 @@ export const GameCanvas: React.FC = () => {
     triggerJump,
     triggerPunch,
     triggerKick,
-  } = useGameInput(battleScene?.player1);
+  } = useGameInput(battleScene);
 
   const handlePause = () => {
     setIsPaused(true);
@@ -35,7 +35,11 @@ export const GameCanvas: React.FC = () => {
 
   const handleRestartRound = () => {
     if (battleScene) {
-      battleScene.scene.restart();
+      if (typeof battleScene.restartRound === "function") {
+        battleScene.restartRound();
+      } else {
+        battleScene.scene.restart();
+      }
     }
   };
 

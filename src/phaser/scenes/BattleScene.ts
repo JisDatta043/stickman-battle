@@ -8,6 +8,7 @@ import { useGameStore } from "@/stores/useGameStore";
 import { usePlayerStore } from "@/stores/usePlayerStore";
 import { socketService } from "@/services/socketService";
 import { useRoomStore } from "@/stores/useRoomStore";
+import { UIScene } from "./UIScene";
 import { GAME_WIDTH } from "@/utils/constants";
 
 export class BattleScene extends Phaser.Scene {
@@ -23,11 +24,38 @@ export class BattleScene extends Phaser.Scene {
     super({ key: "BattleScene" });
   }
 
+  public restartRound() {
+    this.isRoundOver = false;
+
+    // Reset store health points & game status
+    usePlayerStore.getState().resetPlayers();
+    useGameStore.getState().setRoundResult(null);
+    useGameStore.getState().setGameStatus("playing");
+
+    if (this.player1) {
+      this.player1.reset(320, 500, "right");
+    }
+
+    if (this.player2) {
+      this.player2.reset(GAME_WIDTH - 320, 500, "left");
+    }
+
+    if (this.botAI) {
+      this.botAI.reset();
+    }
+
+    const uiScene = this.scene.get("UIScene") as UIScene;
+    if (uiScene && typeof uiScene.startRoundTimer === "function") {
+      uiScene.startRoundTimer();
+    }
+  }
+
   create() {
     this.isRoundOver = false;
 
     // Reset store health points & game status
     usePlayerStore.getState().resetPlayers();
+    useGameStore.getState().setRoundResult(null);
     useGameStore.getState().setGameStatus("playing");
 
     // Initialize Arena & Physics Colliders
