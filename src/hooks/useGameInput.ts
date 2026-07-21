@@ -11,6 +11,8 @@ export function useGameInput(player?: Stickman) {
     if (!player || !player.scene) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!player || !player.scene || !player.body) return;
+
       // Prevent default scrolling on arrow keys & space
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
         e.preventDefault();
@@ -25,7 +27,7 @@ export function useGameInput(player?: Stickman) {
       } else if (e.code === "KeyK" || e.code === "KeyX") {
         player.kick();
       } else if (["KeyW", "ArrowUp", "Space"].includes(e.code)) {
-        if (player.body.blocked.down) {
+        if (player.body?.blocked?.down) {
           player.body.setVelocityY(-560);
           SoundManager.playJump();
         }
@@ -77,7 +79,7 @@ export function useGameInput(player?: Stickman) {
   };
 
   const triggerJump = () => {
-    if (player && player.body.blocked.down) {
+    if (player?.body?.blocked?.down) {
       player.body.setVelocityY(-560);
       SoundManager.playJump();
     }

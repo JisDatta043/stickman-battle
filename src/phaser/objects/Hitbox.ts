@@ -12,6 +12,7 @@ export class Hitbox extends Phaser.GameObjects.Zone {
     scene.physics.add.existing(this, false); // Dynamic Arcade body so setPosition updates body position
     this.body.setAllowGravity(false);
     this.body.setSize(width, height);
+    this.body.setOffset(-width / 2, -height / 2);
     this.deactivate();
   }
 
