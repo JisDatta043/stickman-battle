@@ -35,8 +35,12 @@ class SocketService {
       useSocketStore.getState().setConnected(true);
       useSocketStore.getState().setSocketId(this.socket?.id || null);
       useSocketStore.getState().setError(null);
+      useSocketStore.getState().setIsFallback(false);
       this.isFallbackMode = false;
       this.startPingInterval();
+      if (this.socket) {
+        this.socket.emit("ping", { clientTimestamp: Date.now() });
+      }
     });
 
     this.socket.on("disconnect", (reason) => {
@@ -60,6 +64,7 @@ class SocketService {
 
   private enableFallback() {
     this.isFallbackMode = true;
+    useSocketStore.getState().setIsFallback(true);
     useSocketStore.getState().setConnected(true);
     useSocketStore.getState().setConnecting(false);
     useSocketStore.getState().setSocketId("mock-socket-id");
