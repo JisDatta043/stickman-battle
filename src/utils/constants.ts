@@ -13,7 +13,7 @@ export const KICK_KNOCKBACK = { x: 320, y: -220 };
 export const PUNCH_COOLDOWN = 300; // ms
 export const KICK_COOLDOWN = 550; // ms
 
-export const DEFAULT_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
+export const DEFAULT_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
 
 export const COLOR_P1 = "#3b82f6"; // Blue
 export const COLOR_P2 = "#ef4444"; // Red

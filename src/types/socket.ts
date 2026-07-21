@@ -14,12 +14,12 @@ export interface ServerToClientEvents {
   "health-update": (data: { p1Hp: number; p2Hp: number }) => void;
   "round-end": (result: RoundResult) => void;
   "room-error": (error: RoomError) => void;
-  "pong": (latency: number) => void;
+  "pong": (data: { clientTimestamp?: number; serverTimestamp?: number; latency?: number } | number) => void;
 }
 
 export interface ClientToServerEvents {
-  "create-room": (data: { playerName: string }) => void;
-  "join-room": (data: { roomCode: string; playerName: string }) => void;
+  "create-room": (data: { playerName: string; nickname?: string }) => void;
+  "join-room": (data: { roomCode: string; playerName: string; nickname?: string }) => void;
   "player-ready": (data: { roomCode: string }) => void;
   "player-move": (data: { roomCode: string; input: PlayerInput; position: { x: number; y: number } }) => void;
   "player-jump": (data: { roomCode: string }) => void;
@@ -28,5 +28,5 @@ export interface ClientToServerEvents {
   "health-update": (data: { roomCode: string; p1Hp: number; p2Hp: number }) => void;
   "round-end": (data: { roomCode: string; winnerId: string }) => void;
   "leave-room": (data: { roomCode: string }) => void;
-  "ping": () => void;
+  "ping": (payload?: { clientTimestamp: number }) => void;
 }

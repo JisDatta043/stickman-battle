@@ -52,7 +52,8 @@ class SocketService {
       this.enableFallback();
     });
 
-    this.socket.on("pong", (latency) => {
+    this.socket.on("pong", (data: { clientTimestamp?: number; serverTimestamp?: number; latency?: number } | number) => {
+      const latency = typeof data === "number" ? data : (data?.latency ?? 0);
       useSocketStore.getState().setLatency(latency);
     });
   }
@@ -67,9 +68,7 @@ class SocketService {
   private startPingInterval() {
     setInterval(() => {
       if (this.socket && this.socket.connected) {
-        const start = Date.now();
-        this.socket.emit("ping");
-        useSocketStore.getState().setLatency(Date.now() - start);
+        this.socket.emit("ping", { clientTimestamp: Date.now() });
       }
     }, 5000);
   }
