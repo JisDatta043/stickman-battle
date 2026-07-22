@@ -24,7 +24,7 @@ export function useSocket() {
 
     const socket = socketService.getSocket();
     if (socket && socket.connected && !socketService.isFallback()) {
-      socket.emit("create-room", { playerName, nickname: playerName });
+      socket.emit("create-room", { nickname: playerName });
     } else {
       // Fallback mock socket room generation
       setTimeout(() => {
@@ -43,7 +43,7 @@ export function useSocket() {
 
     const socket = socketService.getSocket();
     if (socket && socket.connected && !socketService.isFallback()) {
-      socket.emit("join-room", { roomCode, playerName, nickname: playerName });
+      socket.emit("join-room", { roomCode, nickname: playerName });
     } else {
       // Fallback mock socket room join
       setTimeout(() => {

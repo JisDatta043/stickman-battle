@@ -8,6 +8,8 @@ interface RoomStoreState {
   error: RoomError | null;
   isJoining: boolean;
   isCreating: boolean;
+  localPlayerIndex: number | null;
+  localPlayerId: string | null;
 
   // Actions
   setRoomCode: (code: string | null) => void;
@@ -16,6 +18,7 @@ interface RoomStoreState {
   setError: (error: RoomError | null) => void;
   setIsJoining: (isJoining: boolean) => void;
   setIsCreating: (isCreating: boolean) => void;
+  setLocalPlayerInfo: (index: number | null, id: string | null) => void;
   clearRoom: () => void;
 }
 
@@ -26,6 +29,8 @@ export const useRoomStore = create<RoomStoreState>((set) => ({
   error: null,
   isJoining: false,
   isCreating: false,
+  localPlayerIndex: null,
+  localPlayerId: null,
 
   setRoomCode: (roomCode) => set({ roomCode }),
   setIsHost: (isHost) => set({ isHost }),
@@ -33,6 +38,7 @@ export const useRoomStore = create<RoomStoreState>((set) => ({
   setError: (error) => set({ error }),
   setIsJoining: (isJoining) => set({ isJoining }),
   setIsCreating: (isCreating) => set({ isCreating }),
+  setLocalPlayerInfo: (localPlayerIndex, localPlayerId) => set({ localPlayerIndex, localPlayerId }),
   clearRoom: () =>
     set({
       roomCode: null,
@@ -41,5 +47,7 @@ export const useRoomStore = create<RoomStoreState>((set) => ({
       error: null,
       isJoining: false,
       isCreating: false,
+      localPlayerIndex: null,
+      localPlayerId: null,
     }),
 }));

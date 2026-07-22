@@ -181,25 +181,139 @@ export class BattleScene extends Phaser.Scene {
 
   private setupSocketEvents() {
     const socket = socketService.getSocket();
-    if (!socket) return;
+    if (!socket || useRoomStore.getState().roomCode === null || socketService.isFallback()) return;
 
-    socket.on("player-state-update", (data) => {
-      if (data.id === "p2" && this.player2) {
-        this.player2.setPosition(data.position.x, data.position.y);
-        this.player2.setFacingDirection(data.facing);
-        this.player2.hp = data.hp;
-        usePlayerStore.getState().setP2Hp(data.hp);
+    // Clean up any existing listeners first to prevent duplicates
+    socket.off("state-update");
+    socket.off("player-hit");
+    socket.off("health-update");
+    socket.off("round-over");
+    socket.off("match-over");
+    socket.off("game-start");
+
+    // Tell the server we are ready in the battle arena
+    socket.emit("ready");
+
+    socket.on("game-start", (data: any) => {
+      console.log("[Phaser] game-start received:", data);
+      useGameStore.getState().setGameStatus("playing");
+    });
+
+    socket.on("state-update", (data: any) => {
+      const localIndex = useRoomStore.getState().localPlayerIndex;
+      const playersList = Object.values(data.gameState?.players || {}) as any[];
+
+      const serverLocalPlayer = playersList.find((p: any) => p.playerIndex === localIndex);
+      const serverOpponentPlayer = playersList.find((p: any) => p.playerIndex !== localIndex);
+
+      if (serverLocalPlayer) {
+        if (localIndex === 1) {
+          this.player1.hp = serverLocalPlayer.health;
+          usePlayerStore.getState().setP1Hp(serverLocalPlayer.health);
+        } else {
+          this.player2.hp = serverLocalPlayer.health;
+          usePlayerStore.getState().setP2Hp(serverLocalPlayer.health);
+        }
+      }
+
+      if (serverOpponentPlayer) {
+        const opponentEntity = localIndex === 1 ? this.player2 : this.player1;
+        if (opponentEntity) {
+          opponentEntity.setPosition(serverOpponentPlayer.position.x, serverOpponentPlayer.position.y);
+          opponentEntity.setFacingDirection(serverOpponentPlayer.direction);
+          opponentEntity.hp = serverOpponentPlayer.health;
+
+          if (serverOpponentPlayer.isAttacking) {
+            opponentEntity.punch(); // Trigger visual attack
+          }
+
+          if (localIndex === 1) {
+            usePlayerStore.getState().setP2Hp(serverOpponentPlayer.health);
+          } else {
+            usePlayerStore.getState().setP1Hp(serverOpponentPlayer.health);
+          }
+        }
+      }
+
+      if (data.gameState?.roundTimer !== undefined) {
+        useGameStore.getState().setRoundTimer(data.gameState.roundTimer);
       }
     });
 
-    socket.on("player-attacked", (data) => {
-      if (data.playerId === "p2" && this.player2) {
-        if (data.attackType === "punch") {
-          this.player2.punch();
+    socket.on("player-hit", (data: any) => {
+      const victimEntity = data.victimId === useRoomStore.getState().localPlayerId
+        ? (useRoomStore.getState().localPlayerIndex === 1 ? this.player1 : this.player2)
+        : (useRoomStore.getState().localPlayerIndex === 1 ? this.player2 : this.player1);
+
+      if (victimEntity && this.emitter) {
+        this.emitter.explode(12, data.position.x, data.position.y);
+        SoundManager.playHurt();
+      }
+    });
+
+    socket.on("health-update", (data: any) => {
+      const isLocal = data.playerId === useRoomStore.getState().localPlayerId;
+      const localIndex = useRoomStore.getState().localPlayerIndex;
+
+      if (isLocal) {
+        if (localIndex === 1) {
+          this.player1.hp = data.health;
+          usePlayerStore.getState().setP1Hp(data.health);
         } else {
-          this.player2.kick();
+          this.player2.hp = data.health;
+          usePlayerStore.getState().setP2Hp(data.health);
+        }
+      } else {
+        if (localIndex === 1) {
+          this.player2.hp = data.health;
+          usePlayerStore.getState().setP2Hp(data.health);
+        } else {
+          this.player1.hp = data.health;
+          usePlayerStore.getState().setP1Hp(data.health);
         }
       }
+    });
+
+    socket.on("round-over", (data: any) => {
+      const localId = useRoomStore.getState().localPlayerId;
+      const localIndex = useRoomStore.getState().localPlayerIndex;
+      const winnerName = data.winnerId
+        ? (data.winnerId === localId
+            ? usePlayerStore.getState().p1Name
+            : usePlayerStore.getState().p2Name)
+        : "Tie";
+
+      let p1Score = 0;
+      let p2Score = 0;
+
+      for (const [pid, score] of Object.entries(data.scores || {})) {
+        if (pid === localId) {
+          if (localIndex === 1) p1Score = score as number;
+          else p2Score = score as number;
+        } else {
+          if (localIndex === 1) p2Score = score as number;
+          else p1Score = score as number;
+        }
+      }
+
+      useGameStore.getState().setRoundResult({
+        winnerId: data.winnerId,
+        winnerName: winnerName,
+        reason: "knockout",
+        scores: { p1: p1Score, p2: p2Score },
+      });
+
+      useGameStore.getState().setGameStatus("roundOver");
+    });
+
+    // Clean up when scene is shut down or destroyed
+    this.events.once("shutdown", () => {
+      socket.off("state-update");
+      socket.off("player-hit");
+      socket.off("health-update");
+      socket.off("round-over");
+      socket.off("match-over");
+      socket.off("game-start");
     });
   }
 
